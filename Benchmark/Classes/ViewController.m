@@ -35,24 +35,27 @@
 
 - (CFTimeInterval)loadImageForOneSec:(NSString *)path
 {
-    //create drawing context to use for decompression
-    UIGraphicsBeginImageContext(CGSizeMake(1, 1));
-    
     //start timing
     NSInteger imagesLoaded = 0;
     CFTimeInterval endTime = 0;
     CFTimeInterval startTime = CFAbsoluteTimeGetCurrent();
     while (endTime - startTime < 1)
     {
-        //load image
-        UIImage *image = [UIImage imageWithContentsOfFile:path];
-        
-        //decompress image by drawing it
-        [image drawAtPoint:CGPointZero];
-        
-        //update totals
-        imagesLoaded ++;
-        endTime = CFAbsoluteTimeGetCurrent();
+        @autoreleasepool
+        {
+            //load image
+            UIImage *image = [UIImage imageWithContentsOfFile:path];
+            
+            //decompress image by drawing it into a new context and extracting result
+            BOOL opaque = CGImageGetAlphaInfo(image.CGImage) == kCGImageAlphaNone;
+            UIGraphicsBeginImageContextWithOptions(image.size, opaque, 0.0f);
+            [image drawAtPoint:CGPointZero];
+            UIGraphicsEndImageContext();
+            
+            //update totals
+            imagesLoaded ++;
+            endTime = CFAbsoluteTimeGetCurrent();
+        }
     }
     
     //close context
